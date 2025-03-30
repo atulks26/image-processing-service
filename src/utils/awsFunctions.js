@@ -6,6 +6,10 @@ import {
 } from "@aws-sdk/client-s3";
 import fs from "fs";
 import crypto from "crypto";
+import dotenv from "dotenv";
+import sharp from "sharp";
+
+dotenv.config();
 
 const s3client = new S3Client({
     region: process.env.AWS_REGION,
@@ -23,14 +27,36 @@ export const generateFileHash = (filePath) => {
 export const s3Upload = async (files) => {
     try {
         const uploadImages = files.map(async (file) => {
-            const key = generateFileHash(file.path);
-            const stream = fs.createReadStream(file.path);
+            let key;
+            let body;
+            let imageBuffer;
+
+            if (file.path) {
+                key = generateFileHash(file.path);
+                imageBuffer = await fs.promises.readFile(file.path);
+                body = fs.createReadStream(file.path);
+            } else if (file.buffer) {
+                key = generateFileHash(file.buffer);
+                imageBuffer = file.buffer;
+                body = file.buffer;
+            } else {
+                throw new Error("File object must have either path or buffer");
+            }
+
+            const metadata = await sharp(imageBuffer).metadata();
+
+            const customMetadata = {};
+            for (const [metaKey, metaValue] of Object.entries(metadata)) {
+                customMetadata[metaKey.toLowerCase()] = String(metaValue);
+            }
 
             const params = {
                 Bucket: process.env.AWS_BUCKET_NAME,
                 Key: key,
-                Body: stream,
+                Body: body,
                 ContentType: file.mimetype,
+                ACL: "public-read",
+                Metadata: customMetadata,
             };
 
             const cmd = new PutObjectCommand(params);
@@ -47,7 +73,11 @@ export const s3Upload = async (files) => {
         console.log("Files uploaded successfully", results);
         return results;
     } catch (err) {
-        console.error("Error uploading files", err);
+        console.error(
+            "Error uploading files",
+            err,
+            process.env.AWS_BUCKET_NAME
+        );
         return null;
     }
 };
@@ -60,13 +90,17 @@ export const s3Get = async (keys) => {
                 Key: key,
             };
 
+            const publicUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+            /*can exclude fetching from the bucket if only the public url is required*/
             const cmd = new GetObjectCommand(params);
             const data = await s3client.send(cmd);
 
             return {
                 message: "File fetched successfully",
                 key,
-                data,
+                metadata: data.Metadata,
+                url: publicUrl,
             };
         });
 

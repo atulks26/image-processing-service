@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-export const authMiddleware = (req, res) => {
+export const authMiddleware = (req, res, next) => {
     const token = req.header("Authorization")?.split(" ")[1];
 
     if (!token) {
@@ -20,6 +20,9 @@ export const authMiddleware = (req, res) => {
     } catch (err) {
         return res
             .status(401)
-            .json({ message: "Error during authorization", error: err });
+            .json({
+                message: "Error during authorization",
+                error: err.message,
+            });
     }
 };

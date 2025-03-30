@@ -10,16 +10,11 @@ import {
 } from "../controllers/image.js";
 
 const imageRouter = express.Router();
-const upload = multer({ dest: "uploads/" });
+const uploadImg = multer({ dest: "uploads/" }).array("files", 6); //change to increase upload limit in one operation
 
 imageRouter.get("/", authMiddleware, getImageUserController);
 imageRouter.get("/:key", getImageKeyController);
-imageRouter.post(
-    "/upload",
-    authMiddleware,
-    upload.array("images", 6), //change to increase upload limit in one operation
-    uploadImageController
-);
+imageRouter.post("/upload", authMiddleware, uploadImg, uploadImageController);
 imageRouter.post("/transform/:key", authMiddleware, transformImageController);
 imageRouter.delete("/:key", authMiddleware, deleteImagesController);
 

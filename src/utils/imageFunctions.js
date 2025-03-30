@@ -1,15 +1,17 @@
 import sharp from "sharp";
 import { s3Upload, s3Delete, s3Get } from "../utils/awsFunctions.js";
 import Image from "../models/image.model.js";
-import redisClient from "../config/redis.js";
+// import redisClient from "../config/redis.js";
 import fs from "fs";
 import axios from "axios";
 
 export const uploadImage = async (files, userId) => {
     const data = await s3Upload(files);
 
+    // console.log(data);
+
     const imageDocuments = await Promise.all(
-        data.map(async (file, index) => {
+        files.map(async (file, index) => {
             const imageBuffer = await fs.promises.readFile(file.path);
             const metadata = await sharp(imageBuffer).metadata();
 
@@ -21,6 +23,8 @@ export const uploadImage = async (files, userId) => {
             };
         })
     );
+
+    // console.log(imageDocuments);
 
     await Image.insertMany(imageDocuments);
 
@@ -35,14 +39,14 @@ export const transformImage = async (key, transformations) => {
     let imageData;
     let fetchImage;
 
-    const checkCache = await redisClient.getAsync(key);
-    if (checkCache) {
-        imageData = JSON.parse(checkCache);
-    } else {
-        fetchImage = await Image.findOne({ key: key });
+    // const checkCache = await redisClient.getAsync(key);
+    // if (checkCache) {
+    //     imageData = JSON.parse(checkCache);
+    // } else {
+    fetchImage = await Image.findOne({ key: key });
 
-        imageData = fetchImage.url;
-    }
+    imageData = fetchImage.url;
+    // }
 
     if (!transformations) return;
 
@@ -117,7 +121,7 @@ export const transformImage = async (key, transformations) => {
             metadata: image.metadata,
         });
 
-        await redisClient.setEx(data[0].key, 3600, JSON.stringify(data[0].url));
+        // await redisClient.setEx(data[0].key, 3600, JSON.stringify(data[0].url));
 
         return {
             message: "Image transformed successfully",
