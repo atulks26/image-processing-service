@@ -117,7 +117,7 @@ export const transformImage = async (key, transformations) => {
             metadata: image.metadata,
         });
 
-        await redisClient.setEx(key, 3600, JSON.stringify(data[0].url));
+        await redisClient.setEx(data[0].key, 3600, JSON.stringify(data[0].url));
 
         return {
             message: "Image transformed successfully",
