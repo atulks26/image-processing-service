@@ -1,13 +1,13 @@
 import express from "express";
 import multer from "multer";
-import { authMiddleware } from "../middlewares/auth";
+import { authMiddleware } from "../middlewares/auth.js";
 import {
     uploadImageController,
     deleteImagesController,
     getImageKeyController,
     getImageUserController,
     transformImageController,
-} from "../controllers/image";
+} from "../controllers/image.js";
 
 const imageRouter = express.Router();
 const upload = multer({ dest: "uploads/" });

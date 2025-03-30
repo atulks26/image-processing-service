@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { s3Upload, s3Delete, s3Get } from "../utils/awsFunctions";
+import { s3Upload, s3Delete, s3Get } from "../utils/awsFunctions.js";
 import Image from "../models/image.model.js";
 import redisClient from "../config/redis.js";
 import fs from "fs";

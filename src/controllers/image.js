@@ -4,7 +4,7 @@ import {
     getImagesByUser,
     transformImage,
     deleteImages,
-} from "../utils/imageFunctions";
+} from "../utils/imageFunctions.js";
 
 export const uploadImageController = async (req, res) => {
     //modify for mutiple images?
