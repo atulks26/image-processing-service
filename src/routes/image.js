@@ -3,7 +3,7 @@ import multer from "multer";
 import { authMiddleware } from "../middlewares/auth.js";
 import {
     uploadImageController,
-    deleteImagesController,
+    deleteImageController,
     getImageKeyController,
     getImageUserController,
     transformImageController,
@@ -16,6 +16,6 @@ imageRouter.get("/", authMiddleware, getImageUserController);
 imageRouter.get("/:key", getImageKeyController);
 imageRouter.post("/upload", authMiddleware, uploadImg, uploadImageController);
 imageRouter.post("/transform/:key", authMiddleware, transformImageController);
-imageRouter.delete("/:key", authMiddleware, deleteImagesController);
+imageRouter.delete("/:key", authMiddleware, deleteImageController);
 
 export default imageRouter;

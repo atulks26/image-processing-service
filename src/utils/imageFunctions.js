@@ -180,8 +180,8 @@ export const getImagesByUser = async (userId) => {
     return result;
 };
 
-export const deleteImages = async (keys) => {
-    const result = await s3Delete(keys);
+export const deleteImage = async (key) => {
+    const result = await s3Delete(key);
 
     return result;
 };

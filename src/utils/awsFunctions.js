@@ -126,24 +126,17 @@ export const s3Get = async (keys) => {
     }
 };
 
-export const s3Delete = async (keys) => {
+export const s3Delete = async (key) => {
     try {
-        const deleteImages = keys.map(async (key) => {
-            const params = {
-                Bucket: process.env.AWS_BUCKET_NAME,
-                Key: key,
-            };
+        const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: key,
+        };
 
-            const cmd = new DeleteObjectCommand(params);
-            await s3client.send(cmd);
+        const cmd = new DeleteObjectCommand(params);
+        await s3client.send(cmd);
 
-            return { message: `File ${key} deleted successfully` };
-        });
-
-        const results = await Promise.all(deleteImages);
-        console.log("Files deleted successfully", results);
-
-        return results;
+        return { message: `File ${key} deleted successfully` };
     } catch (err) {
         console.error("Error deleting files", err);
 

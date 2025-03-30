@@ -3,7 +3,7 @@ import {
     getImageByKey,
     getImagesByUser,
     transformImage,
-    deleteImages,
+    deleteImage,
 } from "../utils/imageFunctions.js";
 
 export const uploadImageController = async (req, res) => {
@@ -68,11 +68,11 @@ export const getImageUserController = async (req, res) => {
     }
 };
 
-export const deleteImagesController = async (req, res) => {
+export const deleteImageController = async (req, res) => {
     try {
-        const { key } = req.body;
+        const { key } = req.params;
 
-        const data = await deleteImages(key);
+        const data = await deleteImage(key);
         res.status(201).json(data);
     } catch (err) {
         return res.status(500).json({ error: err.message });
