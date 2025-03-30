@@ -3,8 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import authRouter from "./src/routes/auth.js";
 import imageRouter from "./src/routes/image.js";
-
-//add redis
+import redisClient from "./src/config/redis.js";
 
 dotenv.config();
 
@@ -17,12 +16,17 @@ app.use("/images", imageRouter);
 
 mongoose
     .connect(`${process.env.MONGODB_URL}/${process.env.DB_NAME}`)
-    .then(() => {
+    .then(async () => {
         console.log("MongoDB connected");
 
-        //add redis
+        try {
+            await redisClient.connect();
+            console.log("Redis connected");
+        } catch (err) {
+            console.error("Redis connection error:", err);
+        }
 
-        app.listen(process.env.PORT, () => {
+        app.listen(process.env.PORT || 8000, () => {
             console.log(`Server running on PORT: ${process.env.PORT}`);
         });
     })

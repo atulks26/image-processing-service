@@ -5,6 +5,7 @@ import {
     DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import fs from "fs";
+import crypto from "crypto";
 
 const s3client = new S3Client({
     region: process.env.AWS_REGION,
@@ -38,7 +39,7 @@ export const s3Upload = async (files) => {
             return {
                 message: "File uploaded successfully",
                 key: key,
-                url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${file.filename}`,
+                url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`,
             };
         });
 
