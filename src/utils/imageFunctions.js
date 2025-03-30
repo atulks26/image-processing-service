@@ -1,14 +1,12 @@
 import sharp from "sharp";
 import { s3Upload, s3Delete, s3Get } from "../utils/awsFunctions.js";
 import Image from "../models/image.model.js";
-// import redisClient from "../config/redis.js";
+import redisClient from "../config/redis.js";
 import fs from "fs";
 import axios from "axios";
 
 export const uploadImage = async (files, userId) => {
     const data = await s3Upload(files);
-
-    // console.log(data);
 
     const imageDocuments = await Promise.all(
         files.map(async (file, index) => {
@@ -24,29 +22,46 @@ export const uploadImage = async (files, userId) => {
         })
     );
 
-    // console.log(imageDocuments);
-
     await Image.insertMany(imageDocuments);
+
+    for (const doc of imageDocuments) {
+        const imageData = {
+            key: doc.key,
+            url: doc.url,
+            user: doc.user,
+        };
+
+        await redisClient.setEx(doc.key, 3600, JSON.stringify(imageData));
+    }
 
     return data;
 };
 
 export const transformImage = async (key, transformations) => {
-    if (!key) {
-        return console.log("Key is required");
-    }
-
     let imageData;
     let fetchImage;
 
-    // const checkCache = await redisClient.getAsync(key);
-    // if (checkCache) {
-    //     imageData = JSON.parse(checkCache);
-    // } else {
-    fetchImage = await Image.findOne({ key: key });
+    const checkCache = await redisClient.getAsync(key);
+    if (checkCache) {
+        imageData = JSON.parse(checkCache);
+    } else {
+        fetchImage = await Image.findOne({ key: key });
+        if (!fetchImage) {
+            console.log("Image not found");
 
-    imageData = fetchImage.url;
-    // }
+            return;
+        }
+
+        const newImageData = {
+            key: fetchImage.key,
+            url: fetchImage.url,
+            user: fetchImage.user,
+        };
+
+        await redisClient.setEx(key, 3600, JSON.stringify(newImageData));
+
+        imageData = fetchImage.url;
+    }
 
     if (!transformations) return;
 
@@ -58,27 +73,39 @@ export const transformImage = async (key, transformations) => {
         let image = sharp(response.data);
 
         if (transformations.resize) {
-            image = await image.resize(transformations.resize);
+            image = image.resize(transformations.resize);
         }
 
         if (transformations.rotate) {
-            image = await image.rotate(transformations.rotate);
+            image = image.rotate(transformations.rotate);
         }
 
         if (transformations.flip) {
-            image = await image.flip();
+            image = image.flip();
         }
 
         if (transformations.mirror) {
-            image = await image.flop();
+            image = image.flop();
         }
 
         if (transformations.crop) {
-            image = await image.extract(transformations.crop);
+            image = image.extract(transformations.crop);
         }
 
         if (transformations.watermark) {
-            image = await image.composite([transformations.watermark]);
+            const watermarkResponse = await axios.get(
+                transformations.watermark,
+                { responseType: "arraybuffer" }
+            );
+            const watermarkBuffer = Buffer.from(watermarkResponse.data);
+
+            image = image.composite([
+                {
+                    input: watermarkBuffer,
+                    gravity: "center",
+                    blend: "multiply",
+                },
+            ]);
         }
 
         if (transformations.compress) {
@@ -105,23 +132,21 @@ export const transformImage = async (key, transformations) => {
         }
 
         const newImageBuffer = await image.toBuffer();
+        const newMetadata = await sharp(newImageBuffer).metadata();
 
         const fileObject = {
-            path: `temp/${key}.jpg`,
             buffer: newImageBuffer,
-            mimetype: `image/${metadata.format}`,
+            mimetype: `image/${newMetadata.format}`,
         };
 
         const data = await s3Upload([fileObject]);
 
         await Image.create({
-            user: userId,
+            user: fetchImage,
             key: data[0].key,
             url: data[0].url,
-            metadata: image.metadata,
+            metadata: newMetadata,
         });
-
-        // await redisClient.setEx(data[0].key, 3600, JSON.stringify(data[0].url));
 
         return {
             message: "Image transformed successfully",
@@ -136,10 +161,12 @@ export const transformImage = async (key, transformations) => {
 
 export const getImageByKey = async (key) => {
     const data = await s3Get([key]);
+
     return data;
 };
 
 export const getImagesByUser = async (userId) => {
+    console.log(userId);
     const data = await Image.find({ user: userId });
     const keys = [];
 
@@ -147,11 +174,14 @@ export const getImagesByUser = async (userId) => {
         keys.push(image.key);
     });
 
+    console.log(keys);
     const result = await s3Get(keys);
+
     return result;
 };
 
 export const deleteImages = async (keys) => {
     const result = await s3Delete(keys);
+
     return result;
 };

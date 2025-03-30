@@ -19,9 +19,17 @@ const s3client = new S3Client({
     },
 });
 
-export const generateFileHash = (filePath) => {
-    const fileBuffer = fs.readFileSync(filePath);
-    return crypto.createHash("sha256").update(fileBuffer).digest("hex");
+export const generateFileHash = (data) => {
+    let fileData;
+    if (Buffer.isBuffer(data)) {
+        fileData = data;
+    } else {
+        fileData = fs.readFileSync(data);
+    }
+    const hash = crypto.createHash("sha256").update(fileData).digest("hex");
+    const dateString = Date.now().toString();
+
+    return `${hash}-${dateString}`;
 };
 
 export const s3Upload = async (files) => {
@@ -31,7 +39,7 @@ export const s3Upload = async (files) => {
             let body;
             let imageBuffer;
 
-            if (file.path) {
+            if (file.path && !file.buffer) {
                 key = generateFileHash(file.path);
                 imageBuffer = await fs.promises.readFile(file.path);
                 body = fs.createReadStream(file.path);
@@ -46,6 +54,7 @@ export const s3Upload = async (files) => {
             const metadata = await sharp(imageBuffer).metadata();
 
             const customMetadata = {};
+
             for (const [metaKey, metaValue] of Object.entries(metadata)) {
                 customMetadata[metaKey.toLowerCase()] = String(metaValue);
             }
@@ -71,6 +80,7 @@ export const s3Upload = async (files) => {
 
         const results = await Promise.all(uploadImages);
         console.log("Files uploaded successfully", results);
+
         return results;
     } catch (err) {
         console.error(
@@ -78,6 +88,7 @@ export const s3Upload = async (files) => {
             err,
             process.env.AWS_BUCKET_NAME
         );
+
         return null;
     }
 };
@@ -106,9 +117,11 @@ export const s3Get = async (keys) => {
 
         const results = await Promise.all(fetchImages);
         console.log("Files fetched successfully", results);
+
         return results;
     } catch (err) {
         console.error("Error fetching files", err);
+
         return null;
     }
 };
@@ -129,9 +142,11 @@ export const s3Delete = async (keys) => {
 
         const results = await Promise.all(deleteImages);
         console.log("Files deleted successfully", results);
+
         return results;
     } catch (err) {
         console.error("Error deleting files", err);
+
         return null;
     }
 };

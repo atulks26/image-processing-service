@@ -18,6 +18,7 @@ export const uploadImageController = async (req, res) => {
         }
 
         const data = await uploadImage(files, userId);
+
         return res
             .status(201)
             .json({ data, message: "Image uploaded successfully" });
@@ -30,14 +31,15 @@ export const uploadImageController = async (req, res) => {
 
 export const transformImageController = async (req, res) => {
     try {
-        const files = req.files;
+        const { key } = req.params;
         const { transformations } = req.body;
 
-        if (!files) {
-            res.status(400).json({ message: "File is required" });
+        if (!key) {
+            res.status(400).json({ message: "Key is required" });
         }
 
-        const data = await transformImage(files, transformations);
+        const data = await transformImage(key, transformations);
+
         return res.status(201).json(data);
     } catch (err) {
         return res.status(500).json({ error: err.message });
