@@ -27,36 +27,36 @@ npm run dev
 
 ### Auth
 
-**Login**
-`POST /auth/login`
-Form data: `username` and `password`
+**Login**\
+`POST /auth/login`\
+Form data: `username` and `password`\
 
-**Signup**
-`POST /auth/signup`
-Form data: `username` and `password`
+**Signup**\
+`POST /auth/signup`\
+Form data: `username` and `password`\
 
 ### Images
 
-**Fetch Image by Key**
-`GET /images/:key`
+**Fetch Image by Key**\
+`GET /images/:key`\
 
-**Fetch Image by User**
-`GET /images`
-Authorization: Required
-Form data: `userId`
+**Fetch Image by User**\
+`GET /images`\
+Authorization: Required\
+Form data: `userId`\
 
-**Upload Image**
-`POST /images/upload`  
-Authorization: Required  
+**Upload Image**\
+`POST /images/upload`\  
+Authorization: Required\  
 Form data:
 | Field | Type | Description |
 |----------|-----------|--------------------------|
 | `files` | `array` | Array of image files to upload (multipart/form-data) |
-| `userId` | `string` | ID of the user uploading the images |
+| `userId` | `string` | ID of the user uploading the images |\
 
-**Transform Image**
-`POST /images/transform/:key`
-Authorization: Required
+**Transform Image**\
+`POST /images/transform/:key`\
+Authorization: Required\
 Example:
 
 ```json
@@ -86,8 +86,8 @@ Example:
 }
 ```
 
-Refer to the [Sharp Documentation](https://sharp.pixelplumbing.com/) for further clarification
+Refer to the [Sharp Documentation](https://sharp.pixelplumbing.com/) for further clarification\
 
-**Delete Image**
-`DELETE /images/:key`
-Authorization: Required
+**Delete Image**\
+`DELETE /images/:key`\
+Authorization: Required\
